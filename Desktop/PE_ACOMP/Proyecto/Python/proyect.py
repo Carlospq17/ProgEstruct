@@ -4,10 +4,10 @@ import os
 class Ordenamiento:
     def partition(self,array, left, right):
         i = (left-1)
-        pivot = array[right]
+        pivot = array[right].get_Frequency()
 
         for j in range(left, right):
-            if array[j] <= pivot:
+            if array[j].get_Frequency() >= pivot:
                 i = i + 1
                 array[i],array[j] = array[j], array[i]
 
@@ -19,6 +19,14 @@ class Ordenamiento:
             partitionIndex = self.partition(array, left, right)
             self.QuickSort(array, left, partitionIndex - 1)
             self.QuickSort(array, partitionIndex + 1, right)
+
+    def Burbuja(self, array): #Deprecated 
+        for numPasada in range(len(array)-1,0,-1):
+            for i in range(numPasada):
+                if array[i].get_Frequency() < array[i+1].get_Frequency():
+                    temp = array[i]
+                    array[i] = array[i+1]
+                    array[i+1] = temp
 
 class Stack:
      def __init__(self):
@@ -88,7 +96,7 @@ class ReadFile(object):
             print self._dataWords.pop()
         print "===================================================="
 
-    def print_Text(self):
+    def print_Text(self): #Deprecated
         size = len(self._dataFinal)
         i = 0
         print "===================================================="
@@ -106,6 +114,10 @@ class ReadFile(object):
 class Dictionary():
     def __init__(self):
         self._dictionary = dict()
+
+    def isEmpty(self):
+        size = len(self.get_Dictionary())
+        return size == 0
 
     def add_Element(self, newElement):
         self._dictionary.update(newElement)
@@ -128,7 +140,7 @@ class Dictionary():
     def print_Dictionary(self):
         dic = self.get_Dictionary()
         for x in dic:
-            print "Llave : %s\t\t\t\t\t\t\t Valor: %s" %(x,dic[x])
+            print "Llave : %s\t\t\t\t Valor: %s" %(x,dic[x])
 
 class Appearance():
     def __init__(self, docID, frequency):
@@ -202,23 +214,60 @@ class InvertedIndex():
         return self._words
 
 class Main(ReadFile):
-    def trigger (self):
-        invIndex = InvertedIndex()
+    def __init__(self):
+        self._invIndex = InvertedIndex()
 
-        print "Para este programa solo se aceptaran archivos de texto en ingles(.txt)"
+    def menu(self):
         while True:
-            directory = raw_input("Ingrese un directorio...\n") #Directorio que sera evaluado y procesado por el programa
-            if os.path.isdir(directory) == True:
-                onlyfiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))] #Metodo para determinar archivos
-                invIndex.index_Files(directory,onlyfiles)#Esta funcion indexa los archivos y sus palabras
-            else:
-                print "La cadena ingresada No es un Directorio"
-            answer = int(raw_input("Es el unico directorio que desea agregar? 1 = Si\n"))
+            print "1 --> Ingresar Directorio"
+            print "2 --> Probar Palabra"
+            print "3 --> Salir"
+            answer = int(raw_input("Ingrese la opcion: "))
             if answer == 1:
-                break
+                self.add_Directory()
+            else:
+                if answer == 2:
+                    self.search_Word()
+                else:
+                    if answer == 3:
+                        break
+                    else:
+                        print "Invalid input"
+
+    def add_Directory (self):
+        print "Para este programa solo se aceptaran archivos de texto en ingles(.txt)"
+        directory = raw_input("Ingrese un directorio...\n") #Directorio que sera evaluado y procesado por el programa
+        if os.path.isdir(directory) == True:
+            onlyfiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))] #Metodo para determinar archivos
+            self.get_invertedIndex().index_Files(directory,onlyfiles)#Esta funcion indexa los archivos y sus palabras
+        else:
+            print ">>>>>La cadena ingresada No es un Directorio<<<<<"
+
+    def search_Word(self):
+        sortTool = Ordenamiento()
+        available = self.get_invertedIndex()
+        if available.get_Words().isEmpty() == False:
+            test = str ( raw_input("Ingrese la palabra\n > "))
+            if available.get_Words().has_Key(test) == True :
+                toSort = available.get_Words().get_Value(test)
+                size = len(toSort)
+                sortTool.QuickSort(toSort, 0, size-1)
+                self.show_Recomendation(toSort)
+            else:
+                print "NO es una llave del diccionario << %s >>" %test
+        else:
+            print ">>>>>El diccionario de palabras esta vacio<<<<<"
+
+    def show_Recomendation(self, sortedList):
+        print "Archivo \t\t\t\t\t\t\t\t\t Coincidencias"
+        for x in sortedList:
+            print "%s \t\t\t |%s" %(self.get_invertedIndex().get_Files().get_Value(x.get_DocID()), x.get_Frequency() )
+
+    def get_invertedIndex(self):
+        return self._invIndex
 
 inicio = Main()
-inicio.trigger()
+inicio.menu()
 
 #-> alias proy /Users/carlospool/Desktop/PE_ACOMP/Proyecto/Python
 #-> alias runproy /Users/carlospool/Desktop/PE_ACOMP/Proyecto/exampleTxt
