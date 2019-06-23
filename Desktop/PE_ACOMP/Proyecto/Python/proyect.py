@@ -1,5 +1,6 @@
 import re
 import os
+import Tkinter as tk
 from Tkinter import *
 from tkMessageBox import *
 
@@ -188,11 +189,11 @@ class InvertedIndex():
                 self.get_Files().add_Element(new)
                 self.index_Words(self.index, fullPath)
                 self.index += 1
-        print "========================================================================"
-        print "Diccionario de archivos \n", self.get_Files().print_Dictionary()
-        print "========================================================================"
-        print "Diccionario de palabras \n", self.get_Words().print_Dictionary()
-        print "========================================================================"
+        #print "========================================================================"
+        #print "Diccionario de archivos \n", self.get_Files().print_Dictionary()
+        #print "========================================================================"
+        #print "Diccionario de palabras \n", self.get_Words().print_Dictionary()
+        #print "========================================================================"
 
     def index_Words(self, docID, path):
         rawData = self._rf.read_File(self.get_Files().get_Value(docID))
@@ -213,7 +214,7 @@ class InvertedIndex():
                     appearanceList.append(ap1)
             else:
                 linkedList = []
-                ap2 = Appearance(docID, 1) # va el docID y su frecuencia de inicio que es 1
+                ap2 = Appearance(docID, 1)
                 linkedList.append(ap2)
                 new = {aux : linkedList}
                 self.get_Words().add_Element(new)
@@ -250,35 +251,12 @@ class MainWindow(Frame):
         self.inputWord.bind("<Return>", self.search_Word)
         self.inputWord.pack(side = LEFT, padx = 5)
 
-    def showContents(self, event): #Deprecated
-        theName = event.widget.winfo_name()
-        theContents = event.widget.get()
-        showinfo("Message", theName + ": " + theContents)
-
-    def menu(self): #Deprecated
-        while True:
-            print "1 --> Ingresar Directorio"
-            print "2 --> Probar Palabra"
-            print "3 --> Salir"
-            answer = int(raw_input("Ingrese la opcion: "))
-            if answer == 1:
-                directory = raw_input("Ingrese un directorio...\n") #Directorio que sera evaluado y procesado por el programa
-                self.add_Directory(directory)
-            else:
-                if answer == 2:
-                    test = str ( raw_input("Ingrese la palabra\n > "))
-                    self.search_Word(test)
-                else:
-                    if answer == 3:
-                        break
-                    else:
-                        print "Invalid input"
-
     def add_Directory (self, event):
         try:
             content = event.widget.get();
             directory = str(content)
             if os.path.isdir(directory) == True:
+                showinfo("Message", "Directory added successfully")
                 onlyfiles = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))] #Metodo para determinar archivos
                 self.get_invertedIndex().index_Files(directory,onlyfiles)#Esta funcion indexa los archivos y sus palabras
             else:
@@ -311,12 +289,39 @@ class MainWindow(Frame):
             showinfo("Message", e2.message)
 
     def show_Recomendation(self, sortedList):
-        print "Archivo \t\t\t\t\t\t\t\t\t Coincidencias"
+        results = tk.Tk()
+        results.title("Resultados")
+        texto = tk.Text(results, height = 10, width = 100)
+        texto.insert(tk.INSERT, "Archivo \t\t\t\t\t\t\t\t\t Coincidencias\n")
         for x in sortedList:
-            print "%s \t\t\t |%s" %(self.get_invertedIndex().get_Files().get_Value(x.get_DocID()), x.get_Frequency() )
-
+            texto.insert(tk.INSERT, "%s \t\t\t       |%s\n" %(self.get_invertedIndex().get_Files().get_Value(x.get_DocID()), x.get_Frequency() ))
+        texto.pack()
     def get_invertedIndex(self):
         return self._invIndex
+
+    def showContents(self, event): #Deprecated
+        theName = event.widget.winfo_name()
+        theContents = event.widget.get()
+        showinfo("Message", theName + ": " + theContents)
+
+    def menu(self): #Deprecated
+        while True:
+            print "1 --> Ingresar Directorio"
+            print "2 --> Probar Palabra"
+            print "3 --> Salir"
+            answer = int(raw_input("Ingrese la opcion: "))
+            if answer == 1:
+                directory = raw_input("Ingrese un directorio...\n") #Directorio que sera evaluado y procesado por el programa
+                self.add_Directory(directory)
+            else:
+                if answer == 2:
+                    test = str ( raw_input("Ingrese la palabra\n > "))
+                    self.search_Word(test)
+                else:
+                    if answer == 3:
+                        break
+                    else:
+                        print "Invalid input"
 
 def main():
     MainWindow().mainloop()
