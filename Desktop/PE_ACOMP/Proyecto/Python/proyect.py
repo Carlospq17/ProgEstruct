@@ -318,7 +318,6 @@ class MainWindow(Frame):
     def get_invertedIndex(self):
         return self._invIndex
 
-
 def main():
     MainWindow().mainloop()
 if __name__ == "__main__":
