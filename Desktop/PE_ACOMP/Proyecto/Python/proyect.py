@@ -3,6 +3,7 @@ import os
 import Tkinter as tk
 from Tkinter import *
 from tkMessageBox import *
+import pickle
 
 class notDirectoryException(Exception):
     def __init__(self, msg):
@@ -171,13 +172,54 @@ class Appearance():
     def get_Frequency(self):
         return self._frequency
 
+class Persistence():
+    def __init__ (self, name):
+        self._name = name + ".pickle"
+
+    def update_Persistence(self, data):
+        #nameFile = nameFile + ".pickle"
+        with open(self._name, 'wb') as handle:
+            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def get_Persistence(self):
+        #nameFile = nameFile + ".pickle"
+        with open(self._name, 'rb') as handle:
+            output = pickle.load(handle)
+        return output
+
+    def exist_persist(self):
+        return os.path.exists(os.path.realpath(self._name))
+
 class InvertedIndex():
     def __init__(self):
         self._rf = ReadFile()
         self.stopWords = self._rf.read_File("/Users/carlospool/Desktop/PE_ACOMP/Proyecto/StopWords/Stop_WordsEN.txt")
-        self._files = Dictionary()
-        self._words = Dictionary()
+        self._files = Dictionary() #Agregar a persistencia
+        self._words = Dictionary() #Agregar a persistencia
+        self._persistFiles = Persistence("files")
+        self._persistWords = Persistence("words")
+        self._persistIndex = Persistence("index")
         self.index = 0
+        self.init_Components()
+
+    def init_Components(self):
+        if self._persistIndex.exist_persist() == True:
+            a = self._persistIndex.get_Persistence()
+            self.set_Index(a.get(1))
+        else:
+            new = {1 : self.index}
+            self._persistIndex.update_Persistence(new)
+        if self._persistFiles.exist_persist() == True:
+            self.set_Files(self._persistFiles.get_Persistence())
+        else:
+            new = {}
+            self._persistFiles.update_Persistence(new)
+        if self._persistWords.exist_persist() == True:
+            self.set_Words(self._persistWords.get_Persistence())
+        else:
+            new = {}
+            self._persistWords.update_Persistence(new)
+
 
     def index_Files(self, directory ,listFiles):
         for f in listFiles:
@@ -189,11 +231,9 @@ class InvertedIndex():
                 self.get_Files().add_Element(new)
                 self.index_Words(self.index, fullPath)
                 self.index += 1
-        #print "========================================================================"
-        #print "Diccionario de archivos \n", self.get_Files().print_Dictionary()
-        #print "========================================================================"
-        #print "Diccionario de palabras \n", self.get_Words().print_Dictionary()
-        #print "========================================================================"
+        self._persistFiles.update_Persistence(self.get_Files())
+        newIndex = {1 : self.index}
+        self._persistIndex.update_Persistence(newIndex)
 
     def index_Words(self, docID, path):
         rawData = self._rf.read_File(self.get_Files().get_Value(docID))
@@ -218,12 +258,22 @@ class InvertedIndex():
                 linkedList.append(ap2)
                 new = {aux : linkedList}
                 self.get_Words().add_Element(new)
+        self._persistWords.update_Persistence(self.get_Words())
 
     def get_Files(self):
         return self._files
 
+    def set_Files(self, data):
+        self._files = data
+
     def get_Words(self):
         return self._words
+
+    def set_Words(self, data):
+        self._words = data
+
+    def set_Index(self, newIndex):
+        self.index = newIndex
 
 class MainWindow(Frame):
     def __init__(self):
@@ -303,25 +353,6 @@ class MainWindow(Frame):
         theName = event.widget.winfo_name()
         theContents = event.widget.get()
         showinfo("Message", theName + ": " + theContents)
-
-    def menu(self): #Deprecated
-        while True:
-            print "1 --> Ingresar Directorio"
-            print "2 --> Probar Palabra"
-            print "3 --> Salir"
-            answer = int(raw_input("Ingrese la opcion: "))
-            if answer == 1:
-                directory = raw_input("Ingrese un directorio...\n") #Directorio que sera evaluado y procesado por el programa
-                self.add_Directory(directory)
-            else:
-                if answer == 2:
-                    test = str ( raw_input("Ingrese la palabra\n > "))
-                    self.search_Word(test)
-                else:
-                    if answer == 3:
-                        break
-                    else:
-                        print "Invalid input"
 
 def main():
     MainWindow().mainloop()
